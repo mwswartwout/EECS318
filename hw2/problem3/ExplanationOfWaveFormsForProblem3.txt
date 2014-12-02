@@ -1,0 +1,12 @@
+We can see from my wave form for problem 3c that my simulation is correct.
+
+Initially the req and ack signals are set to 0, and the state is  set to 000.
+We then see a proper cycle through the system with correct timings, moving the state 000 -> 001 -> 010 -> 011 -> 000
+
+Then we see the ack go to 1 while in state 000, which is illegal. This sends the machine to state 100, which is the error state. The error state remains until the reset signal is called.
+
+Then we see the machine sent to state 001, and hold the state, as it should do while no inputs change.
+Finally we see the machine transition to state 010, and then to the error state. Showing the error state is reachable from any state if the inputs are triggered incorrectly.
+
+This shows that my model is accurate and functions as the specifications describes.
+
