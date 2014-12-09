@@ -1,5 +1,8 @@
+library ieee;
+use ieee.std_logic_1164.all;
+
 entity trafficLight is
-	port ( 	clock : in bit;
+	port ( 	clock : in std_logic;
 		Sa : in bit;
 		Sb : in bit;
 		Ga : out bit;
@@ -21,28 +24,32 @@ begin
 		variable currentState : trafficLightState := s0;
 		
 
-		procedure changeState is begin
+		procedure changeState is 
+		variable alreadyChanged : bit := '0';
+
+		begin
 			case currentState is
-				when s0 => currentState := s1; Ga <= '1'; Ya <= '0'; Ra <= '0'; Gb <= '0'; Yb <= '0'; Rb <= '1';	
-				when s1 => currentState := s2;
-				when s2 => currentState := s3;
-				when s3 => currentState := s4;
-				when s4 => currentState := s5;
+				when s0 => if alreadyChanged = '0' then currentState := s1; Ga <= '1'; Ya <= '0'; Ra <= '0'; Gb <= '0'; Yb <= '0'; Rb <= '1'; alreadyChanged := '1'; end if;
+				when s1 => if alreadyChanged = '0' then currentState := s2; alreadyChanged := '1'; end if;
+ 				when s2 => if alreadyChanged = '0' then currentState := s3; alreadyChanged := '1'; end if;
+				when s3 => if alreadyChanged = '0' then currentState := s4; alreadyChanged := '1'; end if;
+				when s4 => if alreadyChanged = '0' then currentState := s5; alreadyChanged := '1'; end if;
 				when s5 =>
-					if Sb = '1' then Ga <= '0'; Ya <= '1'; currentState := s6; end if;
-				when s6 => Ya <= '0'; Ra <= '1'; Rb <= '0'; Gb <= '1'; currentState := s7;
-				when s7 => currentState := s8;
-				when s8 => currentState := s9;
-				when s9 => currentState := s10;
-				when s10 => currentState := s11;
+					if Sb = '1' and alreadyChanged = '0' then Ga <= '0'; Ya <= '1'; currentState := s6; alreadyChanged := '1'; end if;
+				when s6 => if alreadyChanged = '0' then Ya <= '0'; Ra <= '1'; Rb <= '0'; Gb <= '1'; currentState := s7; alreadyChanged := '1'; end if;
+				when s7 => if alreadyChanged = '0' then currentState := s8; alreadyChanged := '1'; end if;
+				when s8 => if alreadyChanged = '0' then currentState := s9; alreadyChanged := '1'; end if;
+				when s9 => if alreadyChanged = '0' then currentState := s10; alreadyChanged := '1'; end if;
+				when s10 => if alreadyChanged = '0' then  currentState := s11; alreadyChanged := '1'; end if;
 				when s11 =>
-					if Sa = '1' and Sb = '0' then Gb <= '0'; Yb <= '1'; currentState := s12; end if;
-				when s12 => Yb <= '0'; Rb <= '1'; Ra <= '0'; Ga <= '1'; currentState := s0;
+					if Sa = '1' and Sb = '0' and alreadyChanged = '0' then Gb <= '0'; Yb <= '1'; currentState := s12; alreadyChanged := '1'; end if;
+				when s12 => if alreadyChanged = '0' then Yb <= '0'; Rb <= '1'; Ra <= '0'; Ga <= '1'; currentState := s0; alreadyChanged := '1'; end if;
 			end case;
 		end procedure;
 
 	begin
-		if clock = '1' then changeState; end if;
+		if (rising_edge(clock)) then changeState; end if;
+		wait for 1 ns;
 	end process;
 
 
