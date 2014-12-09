@@ -10,5 +10,5 @@ end CSA;
 architecture CSA_arch of CSA is
 begin
 	Sout <=  (A AND B) XOR Sin XOR Cin;
-	Cout <= ((A AND B) AND Sin) OR ((Cin AND (A AND B)) XOR Sin);
+	Cout <= ((A AND B) AND Sin) OR (Cin AND ((A AND B) XOR Sin));
 end CSA_arch;
