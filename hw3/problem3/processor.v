@@ -25,7 +25,7 @@ integer i, j;
 
 initial begin
 	//Clear memory
-	for (i = 0; i < 1024; i = i + 1) begin
+	for (i = 0; i < 4096; i = i + 1) begin
 		memory[i] = 1'b0;
 	end
 	
