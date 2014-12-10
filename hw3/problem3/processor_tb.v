@@ -23,33 +23,48 @@ always begin
 	instruction[23:12] <= 12'd6; //N = 6
 	instruction[11:0] <= 12'd0; //Stored in memory 0
 	#10
-	
+	resetInstruction;
+	#10
 	instruction[31:28] <= 4'd1; // Load
 	instruction[27] <= 1'b0; //Source = memory
 	instruction[23:12] <= 12'd0; //Source address = memory 0
 	instruction[11:0] <= 12'd0; // Destination address = register 0
 	#10
-	
+	resetInstruction;
+	#10
 	instruction[31:28] <= 4'd9; //Complement
 	instruction[27] <= 1'b0; //Source = register
 	instruction[26] <= 1'b0; //Destination = register
 	instruction[23:12] <= 12'd0; //Source address = register 0
 	instruction[11:0] <= 12'd0; //Destination address = register 0;
 	#10
-	
+	resetInstruction;
+	#10
 	instruction[31:28] <= 4'd5; //Add
 	instruction[27] <= 1'b1; //Source = immediate
 	instruction[26] <= 1'b0; //Destination = register
 	instruction[23:12] <= 12'd1; //Source value
 	instruction[11:0] <= 12'd0; //Destination address = register 0;
 	#10
-	
+	resetInstruction;
+	#10
 	instruction[31:28] <= 4'd2; //Store
 	instruction[27] <= 1'b0; // Source = register
 	instruction[23:12] <= 12'd0; // Source = register 0;
 	instruction[11:0] <= 12'd1; // Destination = memory 1;
 	#10
+	resetInstruction;
+	#10
+	
+	//Added an OPCODE 10 to count the 1s in memory 0 and store the sum in memory 1
+	instruction[31:28] = 4'd10;
+	#10
 	
 	$finish;
 end
+
+task resetInstruction; begin
+	instruction = 32'd0;
+end
+endtask
 endmodule 

@@ -88,6 +88,12 @@ always @(posedge clock) begin
 		4'd9: begin //Complement
 			register[instruction[11:0]] = ~sourceValue;
 		end
+		4'd10: begin //1s count
+			j = 0;
+			for (i = 0; i < 12; i = i + 1)
+				if (memory[0][i] == 1'b1) j = j + 1;
+			memory[1] = j;
+		end
 	endcase
 end
 
