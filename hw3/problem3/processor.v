@@ -11,16 +11,17 @@ module processor(instruction, clock, psr);
 */
 input [31:0] instruction;
 input clock;
-output [3:0] psr;
+output reg [4:0] psr;
 
 reg [11:0] memory [4095:0]; //12-bit address allows 4096 possible memory addresses
 reg [11:0] register [4:0]; //16 registers (i.e. 5-bit address) that are each 12-bits wide (maximum width of immediate value)
 
+reg [23:0] doubleWidth;
 reg [11:0] sourceValue, result;
 reg signed [11:0] count;
 reg carry;
 
-integer i;
+integer i, j;
 
 initial begin
 	//Clear memory
@@ -33,6 +34,7 @@ initial begin
 		register[i] = 12'd0;
 	end
 	
+	doubleWidth = 24'd0;
 	sourceValue = 12'd0;
 	result = 12'd0;
 	carry = 1'b0;
@@ -41,11 +43,11 @@ end
 always @(posedge clock) begin
 	getSourceValue;
 	
-	//Clear carry, result, and count
+	//Clear carry, result, count, and doubleWidth
 	carry = 1'b0;
 	result = 12'd0;
 	count = 12'd0;
-	
+	doubleWidth = 24'd0;
 	case (instruction[31:28])
 		4'd0:; //NOP
 		4'd1: begin //LOAD
@@ -68,10 +70,11 @@ always @(posedge clock) begin
 			setPSR;
 		end
 		4'd6: begin //ROTATE
+			doubleWidth = {register[instruction[11:0]], register[instruction[11:0]]};
 			if (count > 0) //Rotate right
-				register[instruction[11:0]] = {register[instruction[11:0][sourceValue : 0], register[instruction[11:0]][11 : sourceValue + 1'b1]};
+				register[instruction[11:0]] = doubleWidth[24 - sourceValue -: 12];
 			else //Rotate left
-				register[instruction[11:0]] = {register[instruction[11:0][12'b12 - sourceValue : 0], register[instruction[11:0][11 : sourceValue]};
+				register[instruction[11:0]] = doubleWidth[12 + sourceValue -: 12];
 			setPSR;
 		end
 		4'd7: begin //SHIFT
@@ -81,27 +84,27 @@ always @(posedge clock) begin
 				register[instruction[11:0]] = count << sourceValue;
 			setPSR;
 		end
-		4'd8; //HALT does nothing, processor waits until next clock cycle to see if it has a new instruction
+		4'd8:; //HALT does nothing, processor waits until next clock cycle to see if it has a new instruction
 		4'd9: begin //Complement
 			register[instruction[11:0]] = ~sourceValue;
 		end
 	endcase
 end
 
-task clearPSR
+task clearPSR; begin
 	psr = 5'd0;
+end
 endtask
 
-task setPSR
-	integer count;
-	
+task setPSR; begin
 	//Carry bit
 	if (carry == 1'b1) psr[0] = 1'b1;
 	else psr[0] = 1'b0;
 	
 	//Parity bit
+	j = 0;
 	for (i = 0; i < 12; i = i + 1) begin
-		if (result[i] == 1) count = count + 1;
+		if (result[i] == 1) j = j + 1;
 	end 
 	if (count % 2 == 0) psr[1] = 1'b1;
 	else psr[1] = 1'b0;
@@ -118,28 +121,29 @@ task setPSR
 	
 	//Negative bit
 	if (result[11] == 1'b1) psr[3] = 1'b1;
-	else psr[3] = 1'b0;	
+	else psr[3] = 1'b0;
+end	
 endtask
 
-task getSourceValue
+task getSourceValue; begin
 	case (instruction[31:28])
 		4'd1: begin //LOAD source can be memory or immediate
-			if (intstruction[27] == 1'b0)
+			if (instruction[27] == 1'b0)
 				sourceValue = memory[instruction[23:12]];
 			else
 				sourceValue = instruction[23:12];
 		end
-		4'd2: //STORE
-		4'd4: //XOR
-		4'd5: //ADD
+		4'd2, //STORE
+		4'd4, //XOR
+		4'd5, //ADD
 		4'd9: //COMPLEMENT
 		begin //Source can be register or immediate
-			if (intstruction[27] == 1'b0)
+			if (instruction[27] == 1'b0)
 				sourceValue = register[instruction[23:12]];
 			else
 				sourceValue = instruction[23:12];
 		end
-		4'd6: //ROTATE
+		4'd6, //ROTATE
 		4'd7: //SHIFT
 		begin
 			count = instruction[23:12];
@@ -149,5 +153,6 @@ task getSourceValue
 		default:
 			sourceValue = 12'd0;
 	endcase
+end
 endtask
 endmodule
