@@ -5,23 +5,17 @@ entity trafficLight_tb is
 end trafficLight_tb;
 
 architecture trafficLight_tb_arch of trafficLight_tb is 
-	component trafficLight port (clock : in std_logic; Sa, Sb : in bit; Ga, Ya, Ra, Gb, Yb, Rb : out bit); end component;
+	component trafficLight port (clock : in std_logic; Sa, Sb : in std_logic; Ga, Ya, Ra, Gb, Yb, Rb : out std_logic); end component;
 	signal clockT : std_logic := '0'; 
-	signal SaT, SbT, GaT, YaT, RaT, GbT, YbT, RbT : bit;
+	signal SaT, SbT, GaT, YaT, RaT, GbT, YbT, RbT : std_logic;
 begin
 	UUT : trafficLight port map (clock => clockT, Sa => SaT, Sb => SbT, Ga => GaT, Ya => YaT, Ra => RaT, Gb => GbT, Yb => YbT, Rb => RbT);
 
 	main : process begin
 		
-		SaT <= '0';
-		SbT <= '0';
-		
-		wait for 120 ns;
-		SbT <= '1';
-		
-		wait for 90 ns;
-		SaT <= '1';
-		SbT <= '0';
+		SaT <= '0', '1' after 210 ns ;
+		SbT <= '0', '1' after 120 ns, '0' after 210 ns;
+		wait;
 		
 	end process main;
 	
@@ -40,7 +34,7 @@ begin
 		wait for 75 ns;
 		assert (RaT = '1' and GbT = '1') report "Failure, trafficLight did not loop at s11" severity error;
 		
-		wait for 50 ns;
+		wait for 80 ns;
 		assert (GaT = '1' and RbT = '1') report "Failure, trafficLight did not transition out of s11" severity error;
 	
 		assert false report "trafficLight test bench complete" severity failure;

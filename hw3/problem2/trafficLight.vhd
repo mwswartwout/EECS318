@@ -3,14 +3,14 @@ use ieee.std_logic_1164.all;
 
 entity trafficLight is
 	port ( 	clock : in std_logic;
-		Sa : in bit;
-		Sb : in bit;
-		Ga : out bit;
-		Ya : out bit;
-		Ra : out bit;
-		Gb : out bit;
-		Yb : out bit;
-		Rb : out bit);
+		Sa : in std_logic;
+		Sb : in std_logic;
+		Ga : out std_logic;
+		Ya : out std_logic;
+		Ra : out std_logic;
+		Gb : out std_logic;
+		Yb : out std_logic;
+		Rb : out std_logic);
 end trafficLight;
 
 architecture trafficLight_arch of trafficLight is
