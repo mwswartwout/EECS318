@@ -1,4 +1,4 @@
-module processor(instruction, clock, psr);
+module processor(clock);
 
 /*	Instruction Register Detail
 	31:28 - Opcode
@@ -9,24 +9,24 @@ module processor(instruction, clock, psr);
 	23:12 - Shift/Rotate Count
 	11:0 - Destination Address
 */
-input [31:0] instruction;
 input clock;
-output reg [4:0] psr;
 
-reg [11:0] memory [4095:0]; //12-bit address allows 4096 possible memory addresses
+reg [31:0] memory [4095:0]; //12-bit address allows 4096 possible memory addresses
 reg [11:0] register [4:0]; //16 registers (i.e. 5-bit address) that are each 12-bits wide (maximum width of immediate value)
 
+reg [31:0] instruction;
 reg [23:0] doubleWidth;
 reg [11:0] sourceValue, result;
 reg signed [11:0] count;
+reg [4:0] psr;
 reg carry;
 
-integer i, j;
+integer i, j, programCounter;
 
 initial begin
 	//Clear memory
 	for (i = 0; i < 4096; i = i + 1) begin
-		memory[i] = 1'b0;
+		memory[i] = 31'd0;
 	end
 	
 	//Clear registers
@@ -34,6 +34,7 @@ initial begin
 		register[i] = 12'd0;
 	end
 	
+	programCounter = 4; //Sets program counter to 4, which we will be using for beginning all programs
 	doubleWidth = 24'd0;
 	sourceValue = 12'd0;
 	result = 12'd0;
@@ -41,6 +42,7 @@ initial begin
 end
 
 always @(posedge clock) begin
+	instruction = memory[programCounter];
 	getSourceValue;
 	
 	//Clear carry, result, count, and doubleWidth
@@ -48,26 +50,66 @@ always @(posedge clock) begin
 	result = 12'd0;
 	count = 12'd0;
 	doubleWidth = 24'd0;
+	
 	case (instruction[31:28])
-		4'd0:; //NOP
+		4'd0: begin //NOP
+			programCounter = programCounter + 1;
+		end
 		4'd1: begin //LOAD
 			result = sourceValue;
 			register[instruction[11:0]] = result; //LOAD loads value from source into a register
 			setPSR;
+			programCounter = programCounter + 1;
 		end
 		4'd2: begin //STORE
 			memory[instruction[11:0]] = sourceValue; //STORE stores value from source into memory
 			clearPSR;
+			programCounter = programCounter + 1;
 		end
 		4'd3: begin //BRANCH
-		end //I have no idea what to do with this right now
+			case (instruction[27:24]) //Condition code
+				4'd0: begin //Always
+					programCounter = programCounter + 1;
+				end
+				4'd1: begin //Parity
+					if (psr[1] == 1'b1) programCounter = instruction[11:0];
+					else programCounter = programCounter + 1;
+				end
+				4'd2: begin //Even
+					if (psr[2] == 1'b1) programCounter = instruction[11:0];
+					else programCounter = programCounter + 1;
+				end
+				4'd3: begin //Carry
+					if (psr[0] == 1'b1) programCounter = instruction[11:0];
+					else programCounter = programCounter + 1;
+				end
+				4'd4: begin //Negative
+					if (psr[3] == 1'b1) programCounter = instruction[11:0];
+					else programCounter = programCounter + 1;
+				end
+				4'd5: begin //Zero
+					if (psr[4] == 1'b1) programCounter = instruction[11:0];
+					else programCounter = programCounter + 1;
+				end
+				4'd6: begin //No Carry
+					if (psr[0] == 1'b0) programCounter = instruction[11:0];
+					else programCounter = programCounter + 1;
+				end
+				4'd7: begin //Positive
+					if (psr[3] == 1'b0) programCounter = instruction[11:0];
+					else programCounter = programCounter + 1;
+				end
+			endcase
+		end
 		4'd4: begin //XOR
 			register[instruction[11:0]] = register[instruction[11:0]] ^ sourceValue;
 			setPSR;
+			programCounter = programCounter + 1;
 		end
 		4'd5: begin //ADD
 			{carry, register[instruction[11:0]]} = register[instruction[11:0]] + sourceValue;
 			setPSR;
+			programCounter = programCounter + 1;
 		end
 		4'd6: begin //ROTATE
 			doubleWidth = {register[instruction[11:0]], register[instruction[11:0]]};
@@ -76,6 +118,7 @@ always @(posedge clock) begin
 			else //Rotate left
 				register[instruction[11:0]] = doubleWidth[12 + sourceValue -: 12];
 			setPSR;
+			programCounter = programCounter + 1;
 		end
 		4'd7: begin //SHIFT
 			if (count > 0) //Shift right
@@ -83,16 +126,25 @@ always @(posedge clock) begin
 			else //Shift left
 				register[instruction[11:0]] = count << sourceValue;
 			setPSR;
+			programCounter = programCounter + 1;
 		end
-		4'd8:; //HALT does nothing, processor waits until next clock cycle to see if it has a new instruction
+		4'd8: begin
+			$finish; //HALT
+		end
 		4'd9: begin //Complement
 			register[instruction[11:0]] = ~sourceValue;
+			programCounter = programCounter + 1;
 		end
-		4'd10: begin //1s count
+		4'd10: begin //1s count (problem 4)
 			j = 0;
 			for (i = 0; i < 12; i = i + 1)
 				if (memory[0][i] == 1'b1) j = j + 1;
 			memory[1] = j;
+			programCounter = programCounter + 1;
+		end
+		4'd11: begin //Multiply (problem 5)
+			memory[2] = memory[0] * memory[1];
+			programCounter = programCounter + 1;
 		end
 	endcase
 end
