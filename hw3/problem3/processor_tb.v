@@ -12,8 +12,4 @@ always begin
 	#5 clock <= ~clock;
 end
 
-always begin
-	#80 $finish;
-end
-
 endmodule 
