@@ -24,10 +24,14 @@ reg carry;
 integer i, j, programCounter;
 
 initial begin
-	//Clear memory
-	for (i = 0; i < 4096; i = i + 1) begin
-		memory[i] = 31'd0;
-	end
+	//Instantiate Memory
+	memory[4] = {4'd2, 1'b1, 12'd6, 12'd0};
+	memory[5] = {4'd1, 1'b0, 12'd0, 12'd0};
+	memory[6] = {4'd9, 1'b0, 1'b0, 12'd0, 12'd0};
+	memory[7] = {4'd5, 1'b1, 1'b0, 12'd1, 12'd0};
+	memory[8] = {4'd2, 1'b0, 12'd0, 12'd1};
+	memory[9] = {4'd10, 28'd0};
+	memory[10] = {4'd11, 28'd0};
 	
 	//Clear registers
 	for (i = 0; i < 5; i = i + 1) begin
